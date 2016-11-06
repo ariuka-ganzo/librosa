@@ -17,6 +17,7 @@ from ..util.decorators import moved
 from ..util.deprecation import rename_kw, Deprecated
 from ..util.exceptions import ParameterError
 from ..filters import get_window, semitone_filterbank
+from ..filters import window_sumsquare
 
 __all__ = ['stft', 'istft', 'magphase', 'iirt',
            'ifgram', 'phase_vocoder',
@@ -289,8 +290,6 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
     n_frames = stft_matrix.shape[1]
     expected_signal_len = n_fft + hop_length * (n_frames - 1)
     y = np.zeros(expected_signal_len, dtype=dtype)
-    ifft_window_sum = np.zeros(expected_signal_len, dtype=dtype)
-    ifft_window_square = ifft_window * ifft_window
 
     for i in range(n_frames):
         sample = i * hop_length
@@ -299,9 +298,15 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
         ytmp = ifft_window * fft.ifft(spec).real
 
         y[sample:(sample + n_fft)] = y[sample:(sample + n_fft)] + ytmp
-        ifft_window_sum[sample:(sample + n_fft)] += ifft_window_square
 
     # Normalize by sum of squared window
+    ifft_window_sum = window_sumsquare(window,
+                                       n_frames,
+                                       win_length=win_length,
+                                       n_fft=n_fft,
+                                       hop_length=hop_length,
+                                       dtype=dtype)
+
     approx_nonzero_indices = ifft_window_sum > util.tiny(ifft_window_sum)
     y[approx_nonzero_indices] /= ifft_window_sum[approx_nonzero_indices]
 

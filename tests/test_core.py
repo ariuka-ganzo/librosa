@@ -20,7 +20,7 @@ import glob
 import numpy as np
 import scipy.io
 import six
-from nose.tools import eq_, raises, make_decorator
+from nose.tools import eq_, raises
 
 import warnings
 warnings.resetwarnings()
